@@ -450,27 +450,10 @@ app.get('/application/:id', function (req, res) {
     });
 });
 
-app.post('/getApplications', function (req, res) {
-
-    // function callbackHandler(err, results) {
-    //     debug('It came back with this ' + results);
-    // }
-    //
-    // const labAdminId = req.body.id;
-    // function labAdmin (callbackHandler) {
-    //     var labAdmin = getLabAdmin(labAdminId, res);
-    // }
-    //
-    // function lab (callbackHandler) {
-    //     var lab = getLab(labAdmin.labId, res);
-    // }
-
-    //function
-
-    const labAdminId = req.body.id;
+function getApplications(netId, callback) {
     let opportunitiesArray = [];
     let reformatted = {};
-    labAdministratorModel.findById(labAdminId, function (err, labAdmin) {
+    labAdministratorModel.findOne({netId: netId}, function (err, labAdmin) {
         if (err) {
             res.send(err);
             return;
@@ -550,11 +533,35 @@ app.post('/getApplications', function (req, res) {
                             count++;
                         }
                     }
-                    res.send(reformatted);
+                    callback(reformatted);
                 });
             });
         })
     });
+}
+
+
+app.post('/getApplications', function (req, res) {
+
+    // function callbackHandler(err, results) {
+    //     debug('It came back with this ' + results);
+    // }
+    //
+    // const labAdminId = req.body.id;
+    // function labAdmin (callbackHandler) {
+    //     var labAdmin = getLabAdmin(labAdminId, res);
+    // }
+    //
+    // function lab (callbackHandler) {
+    //     var lab = getLab(labAdmin.labId, res);
+    // }
+
+    //function
+
+    const labAdminId = req.body.id;
+    getApplications(labAdminId, function(response){
+        res.send(response);
+    })
     /*
      var labAdmin = getLabAdmin(labAdminId, res);
      var lab = getLab(labAdmin.labId, res);
