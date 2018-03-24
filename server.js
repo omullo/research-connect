@@ -542,43 +542,10 @@ function getApplications(netId, callback) {
 
 
 app.post('/getApplications', function (req, res) {
-
-    // function callbackHandler(err, results) {
-    //     debug('It came back with this ' + results);
-    // }
-    //
-    // const labAdminId = req.body.id;
-    // function labAdmin (callbackHandler) {
-    //     var labAdmin = getLabAdmin(labAdminId, res);
-    // }
-    //
-    // function lab (callbackHandler) {
-    //     var lab = getLab(labAdmin.labId, res);
-    // }
-
-    //function
-
     const labAdminId = req.body.id;
     getApplications(labAdminId, function(response){
         res.send(response);
     })
-    /*
-     var labAdmin = getLabAdmin(labAdminId, res);
-     var lab = getLab(labAdmin.labId, res);
-     var labOpportunities = lab.opportunities;
-
-     var applicationsInOpportunities = {};
-
-     for(var opportunityID in labOpportunities) {
-
-     var opportunity = getOpportunity(opportunityID, res);
-     applicationsInOpportunities[opportunity.title] = opportunity.applications;
-     }
-
-     debug(applicationsInOpportunities);
-
-     */
-
 });
 
 /** Graduation Year: 2021. Given graduation year and current date, determine whether they're freshman soph junior senior
@@ -888,10 +855,14 @@ function createLabAndAdmin(req, res) {
     });
 }
 
+
+// TODO: send updates is not tested
+
 // var notif = 0;
 // var lastSent1 = new Date();
 // // if (data.notifications === -1)
 
+// go through each lab admin and send an update to them if needed
 function sendUpdatesLabAdmins() {
     labAdministratorModel.find({}, function (labErr, labAdmins) {
 
@@ -901,6 +872,54 @@ function sendUpdatesLabAdmins() {
     });
 }
 
+function sendUpdate(labAdmin) {
+
+    /*
+     * output of getApplications :
+     * {
+        "titleOpp": {
+            "opportunity": {},
+            "applications": []
+        },
+        ....
+    }
+
+    */
+
+    var applicationsToSend = [];
+
+    var titleOpp = getApplications();
+    for (var key in titleOpp) {
+        if (titleOpp.hasOwnProperty(key)) {
+            if (titleOpp.opportunity.creatorNetId === labAdmin) {
+            for(let j in applications) {
+                if(applications[j].timeSubmitted > labAdmin.lastSent) {
+                    applicationsToSend = applicationsToSend + applications[j];
+                }
+            }
+            }
+        }
+    }
+
+    return applicationsToSend;
+}
+
+//Goes through all the applications and based off of send
+// function allApplications(opportunities) {
+//     let applications = opportunities.application;
+//     let arrayApp = new Array();
+//     let count = 0;
+//
+//     for (let i in applications) {
+//         //if the application hasnt been recieved then send it to the professor
+//         if (arrayApp[count++].status !== "received") {
+//             arrayApp[count++] = applications[i];
+//         }
+//     }
+//     return arrayApp;
+// }
+
+// send scheduled email update to one lab admin. helper function for sendUpdatesLabAdmins()
 function sendScheduledUpdate(labAdmin) {
     // {/*<option value="-1">Never</option>*/}
     // {/*<option value="0">Every Time An Application is Submitted</option>*/}
@@ -924,7 +943,8 @@ function sendScheduledUpdate(labAdmin) {
         //today's date >= nextSend : send email
 
         if(nextSend.getTime() <= new Date()) {
-
+            //send email
+            sendUpdate(labAdmin);
         }
     }
 }
