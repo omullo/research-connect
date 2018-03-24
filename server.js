@@ -450,6 +450,10 @@ app.get('/application/:id', function (req, res) {
     });
 });
 
+function getApplications() {
+
+}
+
 app.post('/getApplications', function (req, res) {
 
     // function callbackHandler(err, results) {
@@ -881,10 +885,14 @@ function createLabAndAdmin(req, res) {
     });
 }
 
+
+// TODO: send updates is not tested
+
 // var notif = 0;
 // var lastSent1 = new Date();
 // // if (data.notifications === -1)
 
+// go through each lab admin and send an update to them if needed
 function sendUpdatesLabAdmins() {
     labAdministratorModel.find({}, function (labErr, labAdmins) {
 
@@ -894,6 +902,54 @@ function sendUpdatesLabAdmins() {
     });
 }
 
+function sendUpdate(labAdmin) {
+
+    /*
+     * output of getApplications :
+     * {
+        "titleOpp": {
+            "opportunity": {},
+            "applications": []
+        },
+        ....
+    }
+
+    */
+
+    var applicationsToSend = [];
+
+    var titleOpp = getApplications();
+    for (var key in titleOpp) {
+        if (titleOpp.hasOwnProperty(key)) {
+            if (titleOpp.opportunity.creatorNetId === labAdmin) {
+            for(let j in applications) {
+                if(applications[j].timeSubmitted > labAdmin.lastSent) {
+                    applicationsToSend = applicationsToSend + applications[j];
+                }
+            }
+            }
+        }
+    }
+
+    return applicationsToSend;
+}
+
+//Goes through all the applications and based off of send
+// function allApplications(opportunities) {
+//     let applications = opportunities.application;
+//     let arrayApp = new Array();
+//     let count = 0;
+//
+//     for (let i in applications) {
+//         //if the application hasnt been recieved then send it to the professor
+//         if (arrayApp[count++].status !== "received") {
+//             arrayApp[count++] = applications[i];
+//         }
+//     }
+//     return arrayApp;
+// }
+
+// send scheduled email update to one lab admin. helper function for sendUpdatesLabAdmins()
 function sendScheduledUpdate(labAdmin) {
     // {/*<option value="-1">Never</option>*/}
     // {/*<option value="0">Every Time An Application is Submitted</option>*/}
@@ -917,7 +973,8 @@ function sendScheduledUpdate(labAdmin) {
         //today's date >= nextSend : send email
 
         if(nextSend.getTime() <= new Date()) {
-
+            //send email
+            sendUpdate(labAdmin);
         }
     }
 }
