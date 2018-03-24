@@ -450,6 +450,7 @@ app.get('/application/:id', function (req, res) {
     });
 });
 
+//netId is labAdmin.netId
 function getApplications(netId, callback) {
     let opportunitiesArray = [];
     let reformatted = {};
@@ -858,21 +859,56 @@ function createLabAndAdmin(req, res) {
 
 // TODO: send updates is not tested
 
-// var notif = 0;
-// var lastSent1 = new Date();
-// // if (data.notifications === -1)
-
 // go through each lab admin and send an update to them if needed
-function sendUpdatesLabAdmins() {
+function sendUpdatesLabAdmins(res) {
     labAdministratorModel.find({}, function (labErr, labAdmins) {
+        // console.log(labAdmins[0]);
 
-        for (var i = 0; i <= labAdmins.length; i++) {
-            sendScheduledUpdate(labAdmins[i]);
+        for (var i = 0; i < labAdmins.length; i++) {
+
+            sendScheduledUpdate(labAdmins[i], res);
+            // break;
         }
     });
 }
 
-function sendUpdate(labAdmin) {
+// send scheduled email update to one lab admin. helper function for sendUpdatesLabAdmins()
+function sendScheduledUpdate(labAdmin, res) {
+    // {/*<option value="-1">Never</option>*/}
+    // {/*<option value="0">Every Time An Application is Submitted</option>*/}
+    // {/*<option value="7">Weekly Update</option>*/}
+    // {/*<option value="30">Monthly Update</option>*/}
+
+
+    // console.log(labAdmin.notifications);
+
+    var notif = labAdmin.notifications;
+    var prevSend = labAdmin.lastSent;
+    var nextSend;
+
+    // return;
+    if (notif !== -1) {
+
+        if (notif === 7 || notif === 30) {
+            nextSend = new Date(prevSend.getTime() + notif * 86400000);
+        }
+
+        //notif === 0
+        else {
+            nextSend = new Date();
+        }
+
+        //today's date >= nextSend : send email
+
+        if(nextSend.getTime() <= new Date()) {
+            //send email
+            sendUpdate(labAdmin);
+        }
+    }
+}
+
+
+function sendUpdate(labAdmin, res) {
 
     /*
      * output of getApplications :
@@ -888,66 +924,33 @@ function sendUpdate(labAdmin) {
 
     var applicationsToSend = [];
 
-    var titleOpp = getApplications();
+    getApplications(labAdmin.netId, function(titleOpp) {
+
     for (var key in titleOpp) {
         if (titleOpp.hasOwnProperty(key)) {
-            if (titleOpp.opportunity.creatorNetId === labAdmin) {
-            for(let j in applications) {
-                if(applications[j].timeSubmitted > labAdmin.lastSent) {
-                    applicationsToSend = applicationsToSend + applications[j];
+            if (titleOpp[key].opportunity.creatorNetId === labAdmin) {
+                for(let j in applications) {
+                    if(applications[j].timeSubmitted > labAdmin.lastSent) {
+                        applicationsToSend = applicationsToSend + applications[j];
+                    }
                 }
             }
-            }
         }
     }
 
+    console.log(applicationsToSend);
     return applicationsToSend;
+
+    });
+
+
+    // res.send("success");
 }
 
-//Goes through all the applications and based off of send
-// function allApplications(opportunities) {
-//     let applications = opportunities.application;
-//     let arrayApp = new Array();
-//     let count = 0;
-//
-//     for (let i in applications) {
-//         //if the application hasnt been recieved then send it to the professor
-//         if (arrayApp[count++].status !== "received") {
-//             arrayApp[count++] = applications[i];
-//         }
-//     }
-//     return arrayApp;
-// }
+app.get('/getLabAdminEmail', function (req, res) {
+    sendUpdatesLabAdmins();
+});
 
-// send scheduled email update to one lab admin. helper function for sendUpdatesLabAdmins()
-function sendScheduledUpdate(labAdmin) {
-    // {/*<option value="-1">Never</option>*/}
-    // {/*<option value="0">Every Time An Application is Submitted</option>*/}
-    // {/*<option value="7">Weekly Update</option>*/}
-    // {/*<option value="30">Monthly Update</option>*/}
-
-    var notif = labAdmin.notifications;
-    var prevSend = labAdmin.lastSent;
-    var nextSend;
-
-    if (notif !== -1) {
-
-        if (notif === 7 || notif === 30) {
-            nextSend = new Date(prevSend.getTime() + notif * 86400000);
-        }
-
-        else if (notif === 0) {
-            nextSend = new Date();
-        }
-
-        //today's date >= nextSend : send email
-
-        if(nextSend.getTime() <= new Date()) {
-            //send email
-            sendUpdate(labAdmin);
-        }
-    }
-}
 
 ///Endpoint for lab admin signup
 app.post('/createLabAdmin', function (req, res) {
