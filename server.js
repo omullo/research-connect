@@ -825,7 +825,7 @@ function createLabAndAdmin(req, res) {
     var lab = new labModel({
         name: data.name,
         labPage: data.labPage,
-        labDescription: data.labDescription,
+        labDescription: data.labDescription
 
         // labAdmins and opportunities not needed during lab admin signup. so commented out.
         // labAdmins: data.labAdmins,
@@ -899,14 +899,15 @@ function sendScheduledUpdate(labAdmin, res) {
         }
 
         //today's date >= nextSend : send email
+        // console.log(nextSend.getTime());
+        // console.log(Date.now());
 
-        if(nextSend.getTime() <= new Date()) {
+        if(nextSend.getTime() <= Date.now()) {
             //send email
             sendUpdate(labAdmin);
         }
     }
 }
-
 
 function sendUpdate(labAdmin, res) {
 
@@ -924,22 +925,26 @@ function sendUpdate(labAdmin, res) {
 
     var applicationsToSend = [];
 
-    getApplications(labAdmin.netId, function(titleOpp) {
+    getApplications(labAdmin.netId, function(titleOpps) {
+    // var titleOppParsed = JSON.parse(titleOpp);
+    // console.log(titleOpp);
 
-    for (var key in titleOpp) {
-        if (titleOpp.hasOwnProperty(key)) {
-            if (titleOpp[key].opportunity.creatorNetId === labAdmin) {
-                for(let j in applications) {
-                    if(applications[j].timeSubmitted > labAdmin.lastSent) {
-                        applicationsToSend = applicationsToSend + applications[j];
+    for (var key in titleOpps) {
+        if (titleOpps.hasOwnProperty(key)) {
+
+            if (titleOpps[key].opportunity.creatorNetId === labAdmin.netId) {
+                // console.log(titleOpps[key].applications[0]);
+                for(let j in titleOpps[key].applications) {
+                    console.log(titleOpps[key].applications[j].timeSubmitted);
+                    if(titleOpps[key].applications[j].timeSubmitted < labAdmin.lastSent) {
+                        applicationsToSend.push(titleOpps[key].applications[j]);
                     }
                 }
             }
         }
     }
-
-    console.log(applicationsToSend);
-    return applicationsToSend;
+        console.log(applicationsToSend);
+        return applicationsToSend;
 
     });
 
@@ -948,7 +953,7 @@ function sendUpdate(labAdmin, res) {
 }
 
 app.get('/getLabAdminEmail', function (req, res) {
-    sendUpdatesLabAdmins();
+    sendUpdatesLabAdmins(res);
 });
 
 
