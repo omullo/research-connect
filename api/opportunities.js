@@ -35,6 +35,13 @@ app.get('/check/:opportunityId', function(req, res){
         }
     });
 });
+app.get('/search', function(req, res){
+    db.opportunityModel.ensureIndex({labDescription:"text"});
+    db.opportunityModel.find({$text:{$search:req.body}});
+
+    //res.status(200).send(response);
+    res.send();
+});
 
 /*
 app.get('/check/:opportunityId', function(req, res){
@@ -419,5 +426,8 @@ app.delete('/:id', function (req, res) {
 
     });
 });
+
+
+
 
 module.exports = app;
