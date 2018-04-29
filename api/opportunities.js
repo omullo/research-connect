@@ -35,12 +35,14 @@ app.get('/check/:opportunityId', function(req, res){
         }
     });
 });
+
 //Find the opportunity based of the string that was searched.
 app.get('/search', function(req, res){
+
     db.opportunityModel.createIndex({labDescription:"text"});
-    db.opportunityModel.find({$text:{$search:req.body}}, {score: {$meta: "textScore"}}).sort({score:{$meta:"textScore"}});
+    res.send(db.opportunityModel.find({$text:{$search:req.query}}, {score: {$meta: "textScore"}}).sort({score:{$meta:"textScore"}}));
 
-
+    console.log("Something");
     //res.status(200).send(response);
     res.send(true);
 });

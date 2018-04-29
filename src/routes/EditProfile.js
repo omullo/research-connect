@@ -35,19 +35,19 @@ class EditProfile extends Component {
     }
 
     handleChange(event){
-      if (event.target.id=="year"){
+      if (event.target.id==="year"){
         this.setState({year: event.target.value});
       }
-      else if (event.target.id=="major"){
+      else if (event.target.id==="major"){
         this.setState({major: event.target.value});
       }
-      else if (event.target.id=="gpa"){
+      else if (event.target.id==="gpa"){
         this.setState({gpa: event.target.value});
       }
-      else if (event.target.id=="new-course"){
+      else if (event.target.id==="new-course"){
         this.setState({newCourse: event.target.value});
       }
-      else if (event.target.id=="new-skill"){
+      else if (event.target.id==="new-skill"){
         this.setState({newSkill: event.target.value});
       }
     }
