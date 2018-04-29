@@ -158,7 +158,7 @@ const labAdministratorSchema = new Schema({
     firstName: {type: String, required: true},
     lastName: {type: String, required: true},
     notifications: {type: Number, required: true},
-    lastSent: {type: Date, default: new Date()},
+    lastSent: {type: Number, default: Date.now()},
     verified: {type: Boolean, default: false}
 });
 
@@ -890,22 +890,41 @@ function sendScheduledUpdate(labAdmin, res) {
     if (notif !== -1) {
 
         if (notif === 7 || notif === 30) {
-            nextSend = new Date(prevSend.getTime() + notif * 86400000);
+            // multiply by thousand because Date.now() returns milliseconds and new Date(value) uses value as number of seconds.
+            nextSend = new Date(prevSend + notif * 86400000).getTime();
         }
 
         //notif === 0
         else {
-            nextSend = new Date();
+            nextSend = Date.now();
         }
 
         //today's date >= nextSend : send email
-        // console.log(nextSend.getTime());
-        // console.log(Date.now());
-
-        if(nextSend.getTime() <= Date.now()) {
+        // console.log(prevSend);
+        //  console.log(nextSend);
+        //  console.log(Date.now());
+        var apps = [];
+        if(nextSend <= Date.now()) {
             //send email
-            sendUpdate(labAdmin);
+            apps = sendUpdate(labAdmin, res);
+            console.log(apps);
         }
+        //TODO  change localhost:3000 to our domain!!! and fix line spacing
+
+        // if (apps.length > 0) {
+        //     const msg = {
+        //         to: labAdmin.netId + '@cornell.edu',
+        //         from: 'dhruvbaijal@gmail.com',
+        //         subject: 'New Applications To Your Opportunity!',
+        //         html: 'Hi,\n' +
+        //         'There are ' + apps.length + 'new applications to the opportunities you have posted. Go to <a href="https://www.research-connect.com">www.research-connect.com/professorView </a>' +
+        //         'Thanks,\n' +
+        //         'The Research Connect Team\n'
+        //     };
+        //
+        //     sgMail.send(msg);
+        // }
+
     }
 }
 
@@ -935,8 +954,8 @@ function sendUpdate(labAdmin, res) {
             if (titleOpps[key].opportunity.creatorNetId === labAdmin.netId) {
                 // console.log(titleOpps[key].applications[0]);
                 for(let j in titleOpps[key].applications) {
-                    console.log(titleOpps[key].applications[j].timeSubmitted);
-                    if(titleOpps[key].applications[j].timeSubmitted < labAdmin.lastSent) {
+                    // console.log(titleOpps[key].applications[j].timeSubmitted);
+                    if(titleOpps[key].applications[j].timeSubmitted >= labAdmin.lastSent) {
                         applicationsToSend.push(titleOpps[key].applications[j]);
                     }
                 }
@@ -951,9 +970,21 @@ function sendUpdate(labAdmin, res) {
 
     // res.send("success");
 }
-
 app.get('/getLabAdminEmail', function (req, res) {
-    sendUpdatesLabAdmins(res);
+    // sendUpdatesLabAdmins(res);
+    var apps;
+    labAdministratorModel.find({}, function (labErr, labAdmins) {
+        for (var i = 0; i < labAdmins.length; i++) {
+            console.log(labAdmins[i]);
+
+            apps = sendScheduledUpdate(labAdmins[i], res);
+
+            // break;
+        }
+
+    });
+    // console.log(apps);
+    res.send(apps);
 });
 
 
