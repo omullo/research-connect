@@ -8,6 +8,7 @@ import ExternalLink from 'react-icons/lib/fa/external-link-square';
 import Delete from 'react-icons/lib/ti/delete';
 import Check from 'react-icons/lib/fa/check';
 import Add from 'react-icons/lib/md/add-circle';
+import axios from 'axios';
 
 class EditProfile extends Component {
     constructor(props) {
@@ -32,6 +33,20 @@ class EditProfile extends Component {
 
         this.displayCourses = this.displayCourses.bind(this);
         this.displaySkills = this.displaySkills.bind(this);
+        this.loadInfoFromServer = this.loadInfoFromServer.bind(this);
+        console.log(this.state.relevantCourses);
+    }
+
+    loadInfoFromServer(){
+        axios.get('undergrads/' + (sessionStorage.getItem('token_id')))
+            .then(res => {
+                this.setState({ gpa: 4.0 });
+                console.log(res.gpa);
+            });
+    }
+
+    componentDidMount() {
+        this.loadInfoFromServer();
     }
 
     handleChange(event){
@@ -167,6 +182,11 @@ class EditProfile extends Component {
         return <div className="display-list">{list}</div>;
       }
     }
+
+    onClick = (e) => {
+        console.log(this.state.year);
+    };
+
     render() {
         return (
             <div>
@@ -274,9 +294,9 @@ class EditProfile extends Component {
                   </div>
               </div>
               </div>
+                  <input type="submit" className="button" value="Submit" onClick={this.onClick}/>
               </div>
             <Footer/>
-
             </div>
         );
     }

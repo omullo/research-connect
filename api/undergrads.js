@@ -1,15 +1,19 @@
 let express = require('express');
 let app = express.Router();
-let {undergradModel, labAdministratorModel, opportunityModel, labModel, debug, replaceAll, sgMail, decryptGoogleToken} = require('../common.js');
+let {verify, undergradModel, labAdministratorModel, opportunityModel, labModel, debug, replaceAll, sgMail, decryptGoogleToken} = require('../common.js');
 
-app.get('/:netId', function (req, res) {
-    undergradModel.find({netId: req.params.netId}, function (err, undergrad) {
-        if (err) {
-            return err;
-        }
-        debug(undergrad.netId);
+app.get('/:tokenId', function (req, res) {
+    verify(req.params.tokenId, function(decrypted){
 
-        res.send(undergrad);
+        undergradModel.find({netId: decrypted}, function (err, undergrad) {
+            if (err) {
+                return err;
+            }
+            debug(undergrad.netId);
+
+            res.send(undergrad);
+        });
+
     });
 });
 
@@ -51,9 +55,9 @@ app.post('/', function (req, res) {
     });
 });
 
-app.put('/:id', function (req, res) {
-    let id = req.params.id;
-    undergradModel.findById(id, function (err, undergrad) {
+app.put('/:netId', function (req, res) {
+    let nId = req.params.netId;
+    undergradModel.find({netId:nId}, function (err, undergrad) {
         if (err) {
             res.status(500).send(err);
         }

@@ -24,6 +24,7 @@ class StudentRegister extends React.Component {
             courses: [],
             file: null
         };
+
     };
 
     optionify(inputArray, inputName) {
