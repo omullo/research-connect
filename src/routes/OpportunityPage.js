@@ -17,7 +17,10 @@ class OpportunityPage extends Component {
             opportunity: {},
             questionAnswers: {},
             submitted: false,
-            student: null
+            triedSubmitting: false,
+            student: null,
+            coverLetter: '',
+            netId: 'unknown'
 
         };
 
@@ -43,6 +46,84 @@ class OpportunityPage extends Component {
        this.setState({
        questionAnswers: answersCopy
       });
+
+    }
+    coverChange(event){
+      this.setState({coverLetter: event.target.value});
+      let answersCopy = JSON.parse(JSON.stringify(this.state.questionAnswers))
+      answersCopy['coverLetter'] = event.target.value;
+       this.setState({
+       questionAnswers: answersCopy
+      });
+    }
+
+
+
+    handleAppSubmit = (e) => {
+
+        e.preventDefault();
+        this.setState({triedSubmitting: true});
+
+        // get our form data out of state
+        const { opportunity,questionAnswers,submitted,triedSubmitting,student, coverLetter, netId} = this.state;
+        if (coverLetter!=''){
+          var allQsAnswered = true;
+          for (var key in questionAnswers){
+            if (questionAnswers[key]==''){
+              var allQsAnswered = false;
+            }
+          }
+          if (allQsAnswered==true){
+              this.setState({submitted:true});
+              console.log("submitting form");
+              var opportunityId = opportunity._id;
+              var responses = questionAnswers;
+              axios.post('/applications', {opportunityId, netId, responses})
+                  .then((result) => {
+                      console.log(result);
+                  });
+
+          }
+
+        }
+
+
+      }
+    //this runs before the "render and return ( ... ) " runs. We use it to get data from the backend about the opportunity
+    componentWillMount() {
+        axios.get('/opportunities/' + this.props.match.params.id + '?netId=' + sessionStorage.getItem('token_id') +
+            '&netIdPlain=' + sessionStorage.getItem('netId'))
+            .then((response) => {
+                this.setState({opportunity: response.data});
+                this.setState({student: response.data.student});
+                if (!this.isEmpty(response.data)) {
+                    var obj = {};
+                    //get all the keys and put them in an array
+                    for (let k in response.data.questions){
+                        //make sure it's an actual key and not a property that all objects have by default
+                        if (response.data.questions.hasOwnProperty(k)){
+                            obj[k]='';
+                        }
+                    }
+
+                    this.setState({questionAnswers: obj});
+                  }
+
+
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        axios.get('/undergrads/' + sessionStorage.getItem('token_id'))
+             .then((response) => {
+              if (!this.isEmpty(response.data)) {
+                this.setState({netId: response.data[0].netId});
+              }
+             })
+             .catch(function (error) {
+                 console.log(error);
+             });
+
 
     }
     printQuestions() {
@@ -74,46 +155,14 @@ class OpportunityPage extends Component {
                     </div>
                 }
             );
-            return <form onSubmit={this.handleAppSubmit.bind(this)}> {questionMapping} <input className="button" type="submit" value="Submit"/></form>;
+            return <form onSubmit={this.handleAppSubmit.bind(this)}> {questionMapping}
+            Cover Letter: Describe why you{"'"}re interested in this lab/position in particular, as well as how any qualifications you have will help you excel in this lab. Please be concise.
+             <textarea value={this.state.coverLetter} onChange={this.coverChange.bind(this)} className="cover-letter"></textarea><input className="button" type="submit" value="Submit"/></form>;
 
         } else {
-            return <form onSubmit={this.handleAppSubmit.bind(this)}> There are no questions. <input className="button" type="submit" value="Submit"/></form>;
+
+            return <form onSubmit={this.handleAppSubmit.bind(this)}> <textarea className="cover-letter"></textarea> <input className="button" type="submit" value="Submit"/></form>;
         }
-    }
-
-    handleAppSubmit(){
-      this.setState({submitted:true});
-    }
-    //this runs before the "render and return ( ... ) " runs. We use it to get data from the backend about the opportunity
-    componentWillMount() {
-        console.log(this.props.match.params.id);
-        axios.get('/opportunities/' + this.props.match.params.id + '?netId=' + sessionStorage.getItem('token_id') +
-            '&netIdPlain=' + sessionStorage.getItem('netId'))
-            .then((response) => {
-                this.setState({opportunity: response.data});
-                this.setState({student: response.data.student});
-                console.log(response.data.student);
-                if (!this.isEmpty(response.data)) {
-                    var obj = {};
-                    //get all the keys and put them in an array
-                    for (let k in response.data.questions){
-                        //make sure it's an actual key and not a property that all objects have by default
-                        if (response.data.questions.hasOwnProperty(k)){
-                            obj[k]='';
-                        }
-                    }
-
-                    this.setState({questionAnswers: obj});
-                  }
-
-
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-
-
-
     }
 
     convertDate(dateString) {
@@ -179,9 +228,9 @@ class OpportunityPage extends Component {
       }
       if (yearsArray.includes("senior")){
         if (this.state.student!=null && Utils.gradYearToString(this.state.student.gradYear) == "Senior"){
-        yearDivArray.push(<div k="se"><CheckBox className="greenCheck"/><span > Senior</span></div>)
+        yearDivArray.push(<div key="se"><CheckBox className="greenCheck"/><span > Senior</span></div>)
       }else{
-        yearDivArray.push(<div k="se"><CrossCircle className="cross"/><span > Senior</span></div>)
+        yearDivArray.push(<div key="se"><CrossCircle className="cross"/><span > Senior</span></div>)
 
       }
         trackYear= true;
@@ -255,7 +304,7 @@ parseGPA(gpa){
                   <div className="title-container column column-65">
                   <div className="title-box">
                     <div className="title-first-col ">
-                    <h2>{this.state.opportunity.title}</h2>
+                    <h4>{this.state.opportunity.title}</h4>
                     <h6> Lab: {this.state.opportunity.labName}</h6>
                     {/*<h6> Principal Investigator: {this.state.opportunity.pi}</h6>*/}
                     </div>
@@ -267,16 +316,14 @@ parseGPA(gpa){
                     </div>
                     </div>
                     <div className="about-box">
-                      <h3>About the Position</h3>
                         <h5> Supervisor:</h5> <p>{this.state.opportunity.supervisor}</p>
                         <h5> Qualifications:</h5> <p>{this.state.opportunity.qualifications}</p>
                         <h5> Tasks:</h5> <p>{this.state.opportunity.undergradTasks}</p>
-                        <h5> Start Season:</h5> {this.state.opportunity.startSeason} <p>{this.state.opportunity.startYear}</p>
+                        <h5> Start Season:</h5> <p>{this.state.opportunity.startSeason} {this.state.opportunity.startYear}</p>
                         <h5> Weekly Hours:</h5> <p>{ this.state.opportunity.minHours+" " }
                            to { this.state.opportunity.maxHours } hours a week. </p>
                         <h5> Project Description:</h5> <p>{this.state.opportunity.projectDescription}</p>
-
-                      <h3>About the Lab</h3>
+                        <h5>Lab:</h5>
                       <a href={this.state.opportunity.labPage}>{this.state.opportunity.labName}</a>
                       <p>{this.state.opportunity.labDescription}</p>
 
@@ -285,8 +332,11 @@ parseGPA(gpa){
 
                       <div id="Application" className="application-box">
                       <h4>Apply Here: </h4>
-                      <br/>
+                      <div className="error-div">
+                      { this.state.triedSubmitting && !this.state.submitted? <p className="app-error-message">Please answer all questions in order to submit.</p>: '' }
+                      </div>
                           { !this.state.submitted ? this.printQuestions(): <p>You have applied to this position.</p> }
+
                       </div>
                     </div>
 

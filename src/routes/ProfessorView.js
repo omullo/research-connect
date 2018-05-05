@@ -44,7 +44,7 @@ class ProfessorView extends Component {
 	}
 
 	componentWillMount() {
-		axios.get('/role/' + /* sessionStorage.getItem('token_id') */ 'prk57')
+		axios.get('/role/' +  sessionStorage.getItem('token_id') /* 'prk57' */)
 		.then((response) => {
 			if (response.data !== 'grad' &&
 				  response.data !== 'labtech' &&
@@ -62,7 +62,7 @@ class ProfessorView extends Component {
 	render() {
 		return (
 			<div>
-				<Navbar/>
+				<Navbar current="professorView"/>
 				<div className='professor-view-container'>
 					<div className='row'>
 						<div className="column column-20">

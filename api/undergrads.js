@@ -1,5 +1,6 @@
 let express = require('express');
 let app = express.Router();
+
 let {verify, undergradModel, labAdministratorModel, opportunityModel, labModel, debug, replaceAll, sgMail, decryptGoogleToken} = require('../common.js');
 
 app.get('/:tokenId', function (req, res) {
@@ -7,13 +8,14 @@ app.get('/:tokenId', function (req, res) {
 
         undergradModel.find({netId: decrypted}, function (err, undergrad) {
             if (err) {
+                console.log("Not found");
                 return err;
             }
+            console.log("Found");
             debug(undergrad.netId);
 
             res.send(undergrad);
         });
-
     });
 });
 
@@ -36,7 +38,7 @@ app.post('/', function (req, res) {
         gradYear: data.gradYear,    //number
         major: data.major,
         gpa: data.GPA,
-        netId: data.netId,
+        netId: data.netid,
         courses: data.courses
     });
     debug(undergrad);
@@ -44,7 +46,7 @@ app.post('/', function (req, res) {
         if (err) {
             res.status(500).send({"errors": err.errors});
             debug(err);
-            console.log("eror in saving ugrad");
+            console.log("error in saving ugrad");
             console.log(err);
         } //Handle this error however you see fit
         else {
@@ -56,6 +58,9 @@ app.post('/', function (req, res) {
 });
 
 app.put('/:netId', function (req, res) {
+    console.log("We have reached the backend");
+    console.log(req.body);
+    var data = req.body;
     let nId = req.params.netId;
     undergradModel.find({netId:nId}, function (err, undergrad) {
         if (err) {
@@ -65,20 +70,23 @@ app.put('/:netId', function (req, res) {
         else {
             // Update each attribute with any possible attribute that may have been submitted in the body of the request
             // If that attribute isn't in the request body, default back to whatever it was before.
-            undergrad.firstName = firstName || undergrad.firstName;
-            undergrad.lastName = req.body.lastName || undergrad.lastName;
-            undergrad.gradYear = req.body.gradYear || undergrad.gradYear;
-            undergrad.major = req.body.major || undergrad.major;
-            undergrad.gpa = req.body.gpa || undergrad.gpa;
-            undergrad.netId = req.body.netId || undergrad.netId;
-            undergrad.resume = req.body.resume || undergrad.resume;
 
+            console.log(undergrad);
+
+            undergrad[0].gradYear = data.year || undergrad[0].gradYear;
+            undergrad[0].major = data.major || undergrad[0].major;
+            undergrad[0].gpa = data.gpa || undergrad[0].gpa;
+            undergrad[0].courses = data.relevantCourses || undergrad[0].courses;
+            undergrad[0].skills = data.relevantSkills || undergrad[0].skills;
+            undergrad[0].resumeId = data.resumeId || undergrad[0].resumeId;
+            undergrad[0].transcriptId = data.transcriptId || undergrad[0].transcriptId;
 
             // Save the updated document back to the database
-            undergrad.save((err, todo) => {
+            undergrad[0].save((err, todo) => {
                 if (err) {
                     res.status(500).send(err)
                 }
+                console.log("success!");
                 res.status(200).send(todo);
             });
         }
