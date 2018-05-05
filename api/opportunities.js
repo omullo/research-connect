@@ -40,21 +40,19 @@ app.get('/check/:opportunityId', function(req, res){
 app.get('/search', function(req, res){
 
 
-    //opportunitySchema.index({'$**': 'text'});
-   //opportunityModel.createIndex({projectDescription:"text"});
+
     opportunityModel.find({$text:{$search:req.query.search}}, function(err,search){
         if(err){
-            console.log(err);
+            console.log(err+"Search not found");
         }
         else{
+            if(search==null){
+                res.send("Search not found :(");
+            }
             console.log(search);
+
         }
-
-      // res.send(opportunityModel.find({$text:{$search:req.body}}, {score: {$meta: "textScore"}}).sort({score:{$meta:"textScore"}}));
-       //res.send(search);
-
     });
-     res.send(req.query.search);
 
 
 });
